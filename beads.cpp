@@ -30,36 +30,32 @@ using namespace std;
 
 typedef long long int64;
 
-int CollectF(int start, char color, const string& necklace) {
-  int run = 0;
-  int N = necklace.length();
+void CalculateRuns(const string& necklace, vector<int>& fr, vector<int>& fb) {
+  const int N = necklace.length();
 
-  for (int i = 0; i < N; i++) {
-    int pos = (start + i) % N;
-
-    if (necklace[pos] != 'w' && necklace[pos] != color)
-      break;
-
-    run++;
+  fr[0] = 0;
+  fb[0] = 0;
+  for (int i = 0; i < N && (necklace[i] == 'r' || necklace[i] == 'w'); i++) {
+    fr[0]++;
+  }
+  for (int i = 0; i < N && (necklace[i] == 'b' || necklace[i] == 'w'); i++) {
+    fb[0]++;
   }
 
-  return run;
-}
-
-int CollectB(int start, char color, const string& necklace) {
-  int N = necklace.length();
-  int run = 0;
-
-  for (int i = 0; i < N; i++) {
-    int pos = (start - i - 1 + N) % N;
-
-    if (necklace[pos] != 'w' && necklace[pos] != color)
-      break;
-
-    run++;
+  for (int i = N-1; i >= 0; i--) {
+    if (necklace[i] == 'r') {
+      fr[i] = min(N, fr[(i+1) % N] + 1);
+      fb[i] = 0;
+    }
+    else if (necklace[i] == 'b') {
+      fb[i] = min(N, fb[(i+1) % N] + 1);
+      fr[i] = 0;
+    }
+    else {
+      fr[i] = min(N, fr[(i+1) % N] + 1);
+      fb[i] = min(N, fb[(i+1) % N] + 1);
+    }
   }
-
-  return run;
 }
 
 int main() {
@@ -69,20 +65,24 @@ int main() {
 
   int N;
   fin >> N;
-  fin.ignore(1, '\n');
 
   string necklace;
   fin >> necklace;
 
-  int opt = 0;
-  for (int i = 0; i < N; i++) {
-    int forward = max(CollectF(i, 'r', necklace), CollectF(i, 'b', necklace));
-    int backward = max(CollectB(i, 'r', necklace), CollectB(i, 'b', necklace));
+  vector<int> fr(N), fb(N), br(N), bb(N);
+  CalculateRuns(necklace, fr, fb);
 
-    opt = max(opt, min(forward + backward, N));
+  reverse(necklace.begin(), necklace.end());
+  CalculateRuns(necklace, br, bb);
+
+  int maxrun = 0;
+  for (int i = 0; i < N; i++) {
+    int local = max(fr[i], fb[i]) + max(br[(N - i) % N], bb[(N - i) % N]);
+    local = min(local, N);
+    maxrun = max(maxrun, local);
   }
 
-  fout << opt << "\n";
+  fout << maxrun << "\n";
 
   fin.close();
   fout.close();
